@@ -1,0 +1,39 @@
+#Which second to do?
+echo "Which second to process?"
+read sec
+export sec
+
+#make the second directory
+mkdir s$sec
+
+#Imagize the video
+ffmpeg -i CitX2F.mp4 -ss $sec -vframes 30 ./s$sec/F-%d.jpg
+ffmpeg -i CitX2R.mp4 -ss $sec -vframes 30 ./s$sec/R-%d.jpg
+ffmpeg -i CitX2B.mp4 -ss $sec -vframes 30 ./s$sec/B-%d.jpg
+ffmpeg -i CitX2L.mp4 -ss $sec -vframes 30 ./s$sec/L-%d.jpg
+ffmpeg -i CitX2U.mp4 -ss $sec -vframes 30 ./s$sec/U-%d.jpg
+ffmpeg -i CitX2D.mp4 -ss $sec -vframes 30 ./s$sec/D-%d.jpg
+
+#Enter the second's directory
+cd ./s$sec
+
+#Finally, stitch the panorama
+for frame in `seq 1 30`;
+do
+	nona -g -o "out f$frame" -m JPEG -z 100 ../cubic.pto F-$frame.jpg R-$frame.jpg B-$frame.jpg L-$frame.jpg U-$frame.jpg D-$frame.jpg
+done
+
+##Cleanup after the stitching
+#(All cleanup processes are ot executed in Debug mode)
+#rm ?-*.jpg
+
+#Render the video!
+ffmpeg -framerate 30 -i 'out f%d.jpg' "out_$sec.mp4"
+#move the video out!
+mv "out_$sec.mp4" ..
+
+##Cleanup
+#rm *.*
+cd ..
+#rmdir s$sec
+#Done.

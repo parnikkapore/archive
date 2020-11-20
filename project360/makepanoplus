@@ -1,0 +1,45 @@
+#! /bin/bash
+#Which second to do?
+export sec=$1
+export topsec=$2
+
+#make the second directory
+mkdir s$sec
+
+#Imagize the video
+cvlc CitX2F.mp4 --rate=1 --video-filter=scene --vout=dummy --start-time=$sec --stop-time=$(($sec + 1)) --scene-format=jpg --scene-ratio=1 --scene-prefix=F- --scene-path ./s$sec vlc://quit
+cvlc CitX2R.mp4 --rate=1 --video-filter=scene --vout=dummy --start-time=$sec --stop-time=$(($sec + 1)) --scene-format=jpg --scene-ratio=1 --scene-prefix=R- --scene-path=./s$sec vlc://quit
+cvlc CitX2B.mp4 --rate=1 --video-filter=scene --vout=dummy --start-time=$sec --stop-time=$(($sec + 1)) --scene-format=jpg --scene-ratio=1 --scene-prefix=B- --scene-path=./s$sec vlc://quit
+cvlc CitX2L.mp4 --rate=1 --video-filter=scene --vout=dummy --start-time=$sec --stop-time=$(($sec + 1)) --scene-format=jpg --scene-ratio=1 --scene-prefix=L- --scene-path=./s$sec vlc://quit
+cvlc CitX2U.mp4 --rate=1 --video-filter=scene --vout=dummy --start-time=$sec --stop-time=$(($sec + 1)) --scene-format=jpg --scene-ratio=1 --scene-prefix=U- --scene-path=./s$sec vlc://quit
+cvlc CitX2D.mp4 --rate=1 --video-filter=scene --vout=dummy --start-time=$sec --stop-time=$(($sec + 1)) --scene-format=jpg --scene-ratio=1 --scene-prefix=D- --scene-path=./s$sec vlc://quit
+
+#Start the next process
+if [ $sec -lt $topsec ]; then
+    ./makepanoplus $(($sec+1)) $topsec &
+fi
+#Enter the second's directory
+cd ./s$sec
+
+##TRAP
+#exit
+
+#Finally, stitch the panorama
+for frame in `seq -w 3 35`;
+do
+	nona -g -o "out f$frame" -m JPEG -z 100 ../cubic_vlc.pto F-000$frame.jpg R-000$frame.jpg B-000$frame.jpg L-000$frame.jpg U-000$frame.jpg D-000$frame.jpg
+done
+
+#Cleanup after the stitching
+rm ?-*.jpg
+
+#Render the video!
+ffmpeg -framerate 32 -i 'out f%02d.jpg' "out_$sec.mp4"
+#move the video out!
+mv "out_$sec.mp4" ..
+
+#Cleanup
+rm *.*
+cd ..
+rmdir s$sec
+#Done.
